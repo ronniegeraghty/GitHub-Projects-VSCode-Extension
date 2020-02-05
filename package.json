@@ -1,0 +1,72 @@
+{
+  "name": "github-projects",
+  "displayName": "GitHub Projects",
+  "description": "Give you a view of the GitHub project you are working on. ",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.41.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:github-project-view",
+    "onCommand:extension.test"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "github-projects",
+          "title": "GitHub Projects",
+          "icon": "resources/github.svg"
+        }
+      ]
+    },
+    "views": {
+      "github-projects": [
+        {
+          "id": "github-projects-view",
+          "name": "GitHub Projects"
+        },
+        {
+          "id": "github-settings-view",
+          "name": "GitHub Settings"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "extension.test",
+        "title": "Test",
+        "icon": "resources/github.svg"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "extension.test",
+          "when": "view == github-projects-view",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "node ./test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.1",
+    "@types/mocha": "^7.0.1",
+    "@types/node": "^12.11.7",
+    "@types/vscode": "^1.41.0",
+    "eslint": "^6.8.0",
+    "glob": "^7.1.6",
+    "mocha": "^7.0.1",
+    "typescript": "^3.7.5",
+    "vscode-test": "^1.3.0"
+  }
+}
