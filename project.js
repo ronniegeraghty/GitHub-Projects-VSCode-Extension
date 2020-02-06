@@ -1,2 +1,0 @@
-//vscode TreeDataProvider
-//vscode.TreeItem

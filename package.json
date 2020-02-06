@@ -12,10 +12,11 @@
     "Other"
   ],
   "activationEvents": [
-    "onView:github-project-view",
+    "onView:gh-projects-view",
+    "onCommand:gh-projects.refreshList",
     "onCommand:extension.test"
   ],
-  "main": "./extension.js",
+  "main": "./src/extension.js",
   "contributes": {
     "viewsContainers": {
       "activitybar": [
@@ -29,7 +30,7 @@
     "views": {
       "github-projects": [
         {
-          "id": "github-projects-view",
+          "id": "gh-projects-view",
           "name": "GitHub Projects"
         },
         {
@@ -40,16 +41,23 @@
     },
     "commands": [
       {
+        "command": "gh-projects.refreshList",
+        "title": "Project Refresh",
+        "icon": {
+          "light": "resources/light/refresh.svg",
+          "dark": "resources/dark/refresh.svg"
+        }
+      },
+      {
         "command": "extension.test",
-        "title": "Test",
-        "icon": "resources/github.svg"
+        "title": "Test Command"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "extension.test",
-          "when": "view == github-projects-view",
+          "command": "gh-projects.refreshList",
+          "when": "view == gh-projects-view",
           "group": "navigation"
         }
       ]
