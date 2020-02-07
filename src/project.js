@@ -1,4 +1,9 @@
 const vscode = require("vscode");
+const fs = require("fs");
+
+const projectJSON = JSON.parse(
+  fs.readFileSync(__dirname + "/projectTest.json", "utf8")
+);
 
 class ProjectProvider {
   constructor(workspaceRoot) {
@@ -11,11 +16,19 @@ class ProjectProvider {
     console.log("Refresh Command Called");
   }
   getTreeItem(element) {
+    console.log(`In GETTREEITEM`);
     return element;
   }
   getChildren(element) {
     console.log("GetChildren Called!");
-    return Promise.resolve([]);
+    console.log(`ELEMENT: ${element}`);
+    console.log(`Element Type: ${element instanceof Project}`);
+
+    if (!element) {
+      // Base of tree, return list of projects
+      return Promise.resolve(this.getProjectsJSON());
+    }
+
     // if (!this.workspaceRoot) {
     //     vscode.window.showInformationMessage('No dependency in empty workspace');
     //     return Promise.resolve([]);
@@ -37,42 +50,19 @@ class ProjectProvider {
   /**
    * Given the path to package.json, read all its dependencies and devDependencies.
    */
-  // getDepsInPackageJson(packageJsonPath) {
-  //     if (this.pathExists(packageJsonPath)) {
-  //         const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-  //         const toDep = (moduleName, version) => {
-  //             if (this.pathExists(path.join(this.workspaceRoot, 'node_modules', moduleName))) {
-  //                 return new Dependency(moduleName, version, vscode.TreeItemCollapsibleState.Collapsed);
-  //             }
-  //             else {
-  //                 return new Dependency(moduleName, version, vscode.TreeItemCollapsibleState.None, {
-  //                     command: 'extension.openPackageOnNpm',
-  //                     title: '',
-  //                     arguments: [moduleName]
-  //                 });
-  //             }
-  //         };
-  //         const deps = packageJson.dependencies
-  //             ? Object.keys(packageJson.dependencies).map(dep => toDep(dep, packageJson.dependencies[dep]))
-  //             : [];
-  //         const devDeps = packageJson.devDependencies
-  //             ? Object.keys(packageJson.devDependencies).map(dep => toDep(dep, packageJson.devDependencies[dep]))
-  //             : [];
-  //         return deps.concat(devDeps);
-  //     }
-  //     else {
-  //         return [];
-  //     }
-  // }
-  // pathExists(p) {
-  //     try {
-  //         fs.accessSync(p);
-  //     }
-  //     catch (err) {
-  //         return false;
-  //     }
-  //     return true;
-  // }
+  getProjectsJSON() {
+    let projectsArr = [];
+    projectJSON.projects.forEach(project => {
+      projectsArr.push(
+        new Project(
+          project.name,
+          project.description,
+          vscode.TreeItemCollapsibleState.Collapsed
+        )
+      );
+    });
+    return projectsArr;
+  }
 }
 exports.ProjectProvider = ProjectProvider;
 class Project extends vscode.TreeItem {
