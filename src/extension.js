@@ -9,6 +9,9 @@ function activate(context) {
   vscode.commands.registerCommand("gh-projects.refreshList", () => {
     projectProvider.refresh();
   });
+  vscode.commands.registerCommand("gh-projects.projectEdit", () => {
+    console.log("Project Edit Command.");
+  });
   vscode.commands.registerCommand("extension.test", () => {
     console.log("Ran Test Command.");
   });
