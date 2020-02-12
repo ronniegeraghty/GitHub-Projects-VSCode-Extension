@@ -3,36 +3,68 @@
     {
       "name": "Initial Project",
       "description": "The initial project of this offering.",
-      "cards": [
+      "columns": [
         {
-          "title": "Add Feature 1",
-          "description": "Add feature 1 to the offering.",
-          "assigned-to": "Ronnie",
-          "issue-number": "1"
+          "title": "To Do",
+          "cards": [
+            {
+              "title": "Feature 1",
+              "description": "Add feature 1 to the offering.",
+              "assigned-to": "Ronnie",
+              "issue-number": "1"
+            },
+            {
+              "title": "Feature 2",
+              "description": "Add feature 2 to the offering.",
+              "assigned-to": "Sophie",
+              "issue-number": "2"
+            }
+          ]
         },
         {
-          "title": "Add Feature 2",
-          "description": "Add feature 2 to the offering.",
-          "assigned-to": "Sophie",
-          "issue-number": "2"
+          "title": "In Progress",
+          "cards": [
+            {
+              "title": "Feature 3",
+              "description": "Add feature 3 to the offering.",
+              "assigned-to": "Ronnie",
+              "issue-number": "3"
+            },
+            {
+              "title": "Feature 4",
+              "description": "Add feature 4 to the offering.",
+              "assigned-to": "Sophie",
+              "issue-number": "4"
+            }
+          ]
+        },
+        {
+          "title": "Done",
+          "cards": [
+            {
+              "title": "Set Up Project",
+              "description": "Set up the initial project.",
+              "assigned-to": "Ronnie",
+              "issue-number": "1"
+            }
+          ]
         }
       ]
     },
     {
       "name": "Second Project",
       "description": "The second project of this offering.",
-      "cards": [
+      "columns": [
         {
-          "title": "Add Feature 2.1",
-          "description": "Add feature 2.1 to the offering.",
-          "assigned-to": "Ronnie",
-          "issue-number": "21"
-        },
-        {
-          "title": "Add Feature 2.2",
-          "description": "Add feature 2.2 to the offering.",
-          "assigned-to": "Sophie",
-          "issue-number": "22"
+          "title": "To Do",
+          "cards": [
+            {
+              "title": "Feature 1",
+              "description": "Add feature 1 to the offering.",
+              "assigned-to": "Ronnie",
+              "issue-number": "1"
+            }
+          ]
         }
       ]
     }

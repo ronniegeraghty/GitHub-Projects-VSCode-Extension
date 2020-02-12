@@ -21,12 +21,15 @@ class ProjectProvider {
   }
   getChildren(element) {
     console.log("GetChildren Called!");
-    console.log(`ELEMENT: ${element}`);
+    console.log(`ELEMENT: ${JSON.stringify(element)}`);
     console.log(`Element Type: ${element instanceof Project}`);
 
     if (!element) {
       // Base of tree, return list of projects
       return Promise.resolve(this.getProjectsJSON());
+    } else if (element instanceof Project) {
+      //Parent Element is Project so get columns of project
+      return Promise.resolve(this.getColumnsJSON(element));
     }
 
     // if (!this.workspaceRoot) {
@@ -57,20 +60,68 @@ class ProjectProvider {
         new Project(
           project.name,
           project.description,
-          vscode.TreeItemCollapsibleState.Collapsed
+          vscode.TreeItemCollapsibleState.Collapsed,
+          project.columns
         )
       );
     });
     return projectsArr;
   }
+  getColumnsJSON(project) {
+    let columnsArr = [];
+    // projectJSON.projects.forEach(project => {
+    //   columnsArr.push(
+    //     new Column(
+    //       project.name,
+    //       project.description,
+    //       vscode.TreeItemCollapsibleState.Collapsed
+    //     )
+    //   );
+    // });
+    project.columns.forEach(column => {
+      columnsArr.push(
+        new Column(
+          column.title,
+          "",
+          vscode.TreeItemCollapsibleState.Collapsed,
+          column.cards
+        )
+      );
+    });
+    return columnsArr;
+  }
 }
 exports.ProjectProvider = ProjectProvider;
 class Project extends vscode.TreeItem {
-  constructor(label, version, collapsibleState, command) {
+  constructor(label, version, collapsibleState, columns, command) {
+    super(label, collapsibleState);
+    this.contextValue = "project";
+    this.label = label;
+    this.version = version;
+    this.collapsibleState = collapsibleState;
+    this.command = command;
+    this.columns = columns;
+    // this.iconPath = {
+    //     light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
+    //     dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
+    // };
+  }
+  get tooltip() {
+    return `${this.label}-${this.version}`;
+  }
+  get description() {
+    return this.version;
+  }
+}
+exports.Project = Project;
+
+class Column extends vscode.TreeItem {
+  constructor(label, version, collapsibleState, cards, command) {
     super(label, collapsibleState);
     this.label = label;
     this.version = version;
     this.collapsibleState = collapsibleState;
+    this.cards = cards;
     this.command = command;
     // this.iconPath = {
     //     light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
@@ -85,4 +136,4 @@ class Project extends vscode.TreeItem {
     return this.version;
   }
 }
-exports.Project = Project;
+exports.Column = Column;
