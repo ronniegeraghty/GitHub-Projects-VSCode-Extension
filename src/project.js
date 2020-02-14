@@ -31,24 +31,6 @@ class ProjectProvider {
       //Parent Element is Project so get columns of project
       return Promise.resolve(this.getColumnsJSON(element));
     }
-
-    // if (!this.workspaceRoot) {
-    //     vscode.window.showInformationMessage('No dependency in empty workspace');
-    //     return Promise.resolve([]);
-    // }
-    // if (element) {
-    //     return Promise.resolve(this.getDepsInPackageJson(path.join(this.workspaceRoot, 'node_modules', element.label, 'package.json')));
-    // }
-    // else {
-    //     const packageJsonPath = path.join(this.workspaceRoot, 'package.json');
-    //     if (this.pathExists(packageJsonPath)) {
-    //         return Promise.resolve(this.getDepsInPackageJson(packageJsonPath));
-    //     }
-    //     else {
-    //         vscode.window.showInformationMessage('Workspace has no package.json');
-    //         return Promise.resolve([]);
-    //     }
-    // }
   }
   /**
    * Given the path to package.json, read all its dependencies and devDependencies.
@@ -69,15 +51,6 @@ class ProjectProvider {
   }
   getColumnsJSON(project) {
     let columnsArr = [];
-    // projectJSON.projects.forEach(project => {
-    //   columnsArr.push(
-    //     new Column(
-    //       project.name,
-    //       project.description,
-    //       vscode.TreeItemCollapsibleState.Collapsed
-    //     )
-    //   );
-    // });
     project.columns.forEach(column => {
       columnsArr.push(
         new Column(
