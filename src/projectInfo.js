@@ -6,13 +6,12 @@ const mediaType = "application/vnd.github.inertia-preview+json";
 
 (async function main() {
   try {
-    console.log("here");
     const res = await request({
-      url: `${endpoint}repos/ronniegeraghty/GitHub-Projects-VSCode-Extension/projects`,
+      url: `${endpoint}repos/ronniegeraghty/GitHub-Projects-VSCode-Extension`,
       method: "GET",
       headers: {
         "User-Agent": ua,
-        "Accept": mediaType
+        Accept: mediaType
       }
     });
     console.log(res);
