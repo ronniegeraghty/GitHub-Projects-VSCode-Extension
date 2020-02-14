@@ -1,5 +1,6 @@
 const vscode = require("vscode");
 const Project = require("./project");
+const gitRemote = require("./gitRemote");
 
 function activate(context) {
   const projectProvider = new Project.ProjectProvider(
@@ -13,6 +14,7 @@ function activate(context) {
     console.log("Project Edit Command.");
   });
   vscode.commands.registerCommand("extension.test", () => {
+    gitRemote.getRemote();
     console.log("Ran Test Command.");
   });
   // vscode.commands.registerCommand('extension.openPackageOnNpm', moduleName => vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`https://www.npmjs.com/package/${moduleName}`)));

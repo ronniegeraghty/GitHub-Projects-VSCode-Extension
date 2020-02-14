@@ -99,6 +99,8 @@
     "github-api": "^3.3.0",
     "http": "0.0.0",
     "request": "^2.88.0",
-    "request-promise": "^4.2.5"
+    "request-promise": "^4.2.5",
+    "simple-git": "^1.131.0",
+    "vscode": "^1.1.36"
   }
 }
