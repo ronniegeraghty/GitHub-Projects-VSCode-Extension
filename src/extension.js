@@ -21,6 +21,7 @@ function activate(context) {
   // vscode.commands.registerCommand('nodeDependencies.addEntry', () => vscode.window.showInformationMessage(`Successfully called add entry.`));
   // vscode.commands.registerCommand('nodeDependencies.editEntry', (node) => vscode.window.showInformationMessage(`Successfully called edit entry on ${node.label}.`));
   // vscode.commands.registerCommand('nodeDependencies.deleteEntry', (node) => vscode.window.showInformationMessage(`Successfully called delete entry on ${node.label}.`));
+  console.log(`CONTEXT: ${context}`);
 }
 exports.activate = activate;
 //# sourceMappingURL=extension.js.map
