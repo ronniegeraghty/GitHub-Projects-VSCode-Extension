@@ -10,6 +10,7 @@ const { exec } = require("child_process");
  */
 exports.getRemote = async () => {
   console.log(`PATH: ${path}`);
+  console.log("IN getRemote");
   if (!(await isGitInit())) {
     //Git not Initialized
     console.log("Git has NOT been initialized!");
@@ -25,8 +26,8 @@ exports.getRemote = async () => {
     console.log("Git has be initialized!");
     let remote;
     console.log("Get Remote URLs:");
-    getRemoteURL().then(async url => {
-      remote = await url;
+    getRemoteURL().then(url => {
+      remote = url;
       console.log(`REMOTE: ${remote}`);
     });
   }
@@ -38,6 +39,7 @@ exports.getRemote = async () => {
  * @returns {Promise} Resolves to a boolean that denotes if git has been initialized. Rejects if an error occurs.
  */
 const isGitInit = async () => {
+  console.log("IN isGitInit");
   return new Promise((resolve, reject) => {
     fs.readdir(path, async (err, files) => {
       if (err) {
@@ -61,6 +63,7 @@ const isGitInit = async () => {
  * @returns {Promise} Resolves when the git repo has finished initialized with the value of the stdout. Rejects if there is an error.
  */
 const initGit = async () => {
+  console.log("IN initGit");
   return new Promise(async (resolve, reject) => {
     exec(`cd ${path} && git init`, (error, stdout, stderr) => {
       if (error) {
@@ -79,10 +82,13 @@ const initGit = async () => {
  * @returns {Promise} - Should resolve to a string that is the GitHub URL to be used.
  */
 const getRemoteURL = async () => {
+  console.log("IN getRemoteURL");
   return new Promise(async resolve => {
-    getAllRemoteUrls().then(urls => {
+    getAllRemoteUrls().then(async urls => {
       //Get the URLs for all the configured remotes
-      resolve(handleRemoteURL(urls)); //resolve to the URL that is a GitHub URL and the one the user wishes to use.
+      handleRemoteURL(urls).then(url => {
+        resolve(url);
+      }); //resolve to the URL that is a GitHub URL and the one the user wishes to use.
     });
   });
 };
@@ -92,6 +98,7 @@ const getRemoteURL = async () => {
  * @returns {Promise} - Should resolve to an array of strings that are the URLs for the remote git repos.
  */
 const getAllRemoteUrls = async () => {
+  console.log("IN getAllRemoteUrls");
   return new Promise((resolve, reject) => {
     let remoteURLs = []; //array to be returned
     fs.readFile(`${path}/.git/config`, (err, data) => {
@@ -120,6 +127,7 @@ const getAllRemoteUrls = async () => {
  * @returns {number[]} - An array of numbers that contains the indexes of each instance the substring shows in the searched string.
  */
 const getAllIndexesOfSubString = (str, substr) => {
+  console.log("IN getAllIndexesOfSubString");
   let indexes = []; //hold all found indexes
   let currentIndex = 0; // the current index to start searching at
   while (indexes[indexes.length - 1] != -1) {
@@ -131,16 +139,29 @@ const getAllIndexesOfSubString = (str, substr) => {
   return indexes;
 };
 
-const handleRemoteURL = urls => {
-  urls = removeNonGitHubURLs(urls);
-  if (urls.length == 0) {
-    //No GitHub remotes configured
-  } else if (urls.length > 1) {
-    //More than one GitHub remote configured
-  } else {
-    //Only one GitHub remote configured
-    return urls[0];
-  }
+const handleRemoteURL = async urls => {
+  console.log("IN handleRemoteURL");
+  return new Promise((resolve, reject) => {
+    urls = removeNonGitHubURLs(urls);
+    if (urls.length == 0) {
+      //No GitHub remotes configured
+      vscode.window
+        .showInformationMessage(
+          "No GitHub Remotes Configured!",
+          "Add GitHub Remote"
+        )
+        .then(action => {
+          if (action === "Add GitHub Remote") {
+            resolve(addGitHubRemote());
+          }
+        });
+    } else if (urls.length > 1) {
+      //More than one GitHub remote configured
+    } else {
+      //Only one GitHub remote configured
+      resolve(urls[0]);
+    }
+  });
 };
 
 /**
@@ -149,6 +170,7 @@ const handleRemoteURL = urls => {
  * @returns {String[]} - An array of URL strings containing only the GitHub Urls provided.
  */
 const removeNonGitHubURLs = urls => {
+  console.log("IN removeNonGitHubURLs");
   let result = []; //array to be returned
   urls.forEach(url => {
     if (isGitHubRepo(url)) {
@@ -165,6 +187,58 @@ const removeNonGitHubURLs = urls => {
  * @returns {boolean} - True if url is a github repo, false if not.
  */
 const isGitHubRepo = url => {
+  console.log("IN isGitHubRepo");
   //might need to be changed to check against private github servers.
   return url.substring(0, 19) === "https://github.com/";
+};
+
+/**
+ * Asks User for a GitHub URL and a name for the remote then creates the remote git repo.
+ * @summary This function will use the vscode api to get user input on the GitHub Repo URL they would like to use and the name they want to give the remote. If the URL the user gives is not a GitHub URL the function will warn them of this and the give them the option to try again. If they take this option the function will recusively call itself to have them go through entering a GitHub URL again.
+ * @returns {Promise} Should resolve to a string containing the URL of the added remote git repo.
+ */
+const addGitHubRemote = async () => {
+  console.log("IN addGitHubRemote");
+  return new Promise((resolve, reject) => {
+    vscode.window
+      .showInputBox({
+        placeHolder: "GitHub URL",
+        prompt: "Enter the URL of the GitHub Repo"
+      })
+      .then(inputURL => {
+        console.log(`USER-INPUT: ${inputURL}`);
+        if (!isGitHubRepo(inputURL)) {
+          vscode.window
+            .showErrorMessage(
+              "That is not a GitHup URL!",
+              "Try adding a GitHub Remote Again"
+            )
+            .then(action => {
+              if (action === "Try adding a GitHub Remote Again") {
+                resolve(addGitHubRemote());
+              }
+            });
+        } else {
+          vscode.window
+            .showInputBox({
+              placeHolder: "Remote Name",
+              prompt: "Enter a name for the remote repo."
+            })
+            .then(inputName => {
+              exec(
+                `cd ${path} && git remote add ${inputName} ${inputURL}`,
+                (error, stdout, stderr) => {
+                  if (error) {
+                    console.log(error);
+                  }
+                  if (stderr) {
+                    console.log(stderr);
+                  }
+                }
+              );
+              resolve(inputURL);
+            });
+        }
+      });
+  });
 };
