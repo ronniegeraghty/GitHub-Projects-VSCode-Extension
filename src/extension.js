@@ -13,8 +13,9 @@ function activate(context) {
   vscode.commands.registerCommand("gh-projects.projectEdit", () => {
     console.log("Project Edit Command.");
   });
-  vscode.commands.registerCommand("extension.test", () => {
-    gitRemote.getRemote();
+  vscode.commands.registerCommand("extension.test", async () => {
+    console.log(`From extension.js| REMOTE: ${await gitRemote.getRemote()}`);
+    //gitRemote.getRemote();
     console.log("Ran Test Command.");
   });
   // vscode.commands.registerCommand('extension.openPackageOnNpm', moduleName => vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`https://www.npmjs.com/package/${moduleName}`)));
