@@ -1,119 +1,90 @@
 const vscode = require("vscode");
 const fs = require("fs");
+const { execSync } = require("child_process");
 let path = vscode.workspace.rootPath;
-const { exec } = require("child_process");
 
-/**
- * Returns the URL of a remote git repo
- * @summary - Returns the URL of the remote git repo the user wants to use in the GitHub Project VSCode Extension. It will ask them to init git and add a remote if they haven't already. It will also ask them to choose a remote if there are multiple github remotes listed.
- * @module
- */
-exports.getRemote = async (testPath = path) => {
-  path = testPath; //let path be overwritten for testing.
+exports.getRemote = (testPath = path) => {
+  path = testPath; // let path be overwritten for testing.
   console.log(`PATH: ${path}`);
-  console.log("IN getRemote");
-  if (!(await isGitInit())) {
-    //Git not Initialized
-    console.log("Git has NOT been initialized!");
-    vscode.window
-      .showInformationMessage("Git not initialized", "Initialize Git")
-      .then(action => {
-        if (action === "Initialize Git") {
-          initGit().then(this.getRemote);
-        }
-      });
-  } else {
-    //Git has been initialized
-    console.log("Git has been initialized!");
-    let remote;
-    console.log("Get Remote URLs:");
-    getRemoteURL().then(url => {
-      remote = url;
-      console.log(`REMOTE: ${remote}`);
-      return remote;
-    });
-  }
-};
-
-/**
- * Returns true if git has be initialized
- * @summary - If git has be initialized, meaning there is a .git directory in the working directory then it will return true, else it will return false.
- * @returns {Promise} Resolves to a boolean that denotes if git has been initialized. Rejects if an error occurs.
- */
-const isGitInit = async () => {
-  console.log("IN isGitInit");
-  return new Promise((resolve, reject) => {
-    fs.readdir(path, async (err, files) => {
-      if (err) {
-        reject(err);
-      } else {
-        let found = false;
-        files.forEach(file => {
-          if (file === ".git") {
-            found = true;
-            resolve(found);
-          }
-        });
-        resolve(found);
-      }
-    });
-  });
-};
-
-/**
- * Initialize git in the working directory.
- * @returns {Promise} Resolves when the git repo has finished initialized with the value of the stdout. Rejects if there is an error.
- */
-const initGit = async () => {
-  console.log("IN initGit");
+  console.log("IN getRemote()");
   return new Promise(async (resolve, reject) => {
-    exec(`cd ${path} && git init`, (error, stdout, stderr) => {
-      if (error) {
-        reject(error);
+    //Check if git is installed
+    if (!isGitInstalled()) {
+      //Git is not installed
+      console.log("Git is not installed");
+      vscode.window.showErrorMessage(
+        "Git is not installed. Please install Git to use the GitHub Projects Extension!"
+      );
+      reject("NOGIT");
+    } else {
+      //Git is installed
+      console.log("Git is installed");
+      //Check if git is initialized
+      if (!isGitInit()) {
+        //Git has not been initialized
+        console.log("Git is not Initialized");
+        initGit();
+        resolve(await this.getRemote());
+      } else {
+        //Git has been initialized
+        console.log("Git has been Initialized");
+        const urls = getAllRemoteURLs();
+        resolve(handleURLs(urls)); //get the URL the user wants to use
       }
-      if (stderr) {
-        reject(stderr);
-      }
-      resolve(stdout);
-    });
+    }
+    reject("ERROR: Get Git Remote URL Failed");
   });
 };
 
 /**
- * Gets the GitHub remote repo URL to be used for the GitHub Projects VSCode Extension
- * @returns {Promise} - Should resolve to a string that is the GitHub URL to be used.
+ * Has Git been installed locally on the user's machine
+ * @returns {boolean} - True if git has been installed, else false.
  */
-const getRemoteURL = async () => {
-  console.log("IN getRemoteURL");
-  return new Promise(async resolve => {
-    getAllRemoteUrls().then(async urls => {
-      //Get the URLs for all the configured remotes
-      handleRemoteURL(urls).then(url => {
-        resolve(url);
-      }); //resolve to the URL that is a GitHub URL and the one the user wishes to use.
-    });
-  });
-};
+function isGitInstalled() {
+  console.log("IN isGitInstalled()");
+  const stdout = String(execSync("git --version"));
+  return stdout.substring(0, 11) === "git version";
+}
 
 /**
- * Will return the URLs for all the remote git repos configured
- * @returns {Promise} - Should resolve to an array of strings that are the URLs for the remote git repos.
+ * Has Git been initialized in the workspace root path.
+ * @returns{boolean} - True if git has been init, else false.
  */
-const getAllRemoteUrls = () => {
-  console.log("IN getAllRemoteUrls");
-  return new Promise((resolve, reject) => {
-    let remoteURLs = []; //array to be returned
-    let data = fs.readFileSync(`${path}/.git/config`);
-    let dataStr = String(data); //Data is a buffer so cast it as a string to simplify working with strign functions in following lines.
-    let indexes = getAllIndexesOfSubString(dataStr, "url"); //get the indexes of the lines that have urls
-    indexes.forEach(index => {
-      remoteURLs.push(
-        dataStr.substring(index + 6, dataStr.indexOf("\n", index))
-      ); //Get the substring that holds the url and push it to the array.
-    });
-    resolve(remoteURLs);
+function isGitInit() {
+  console.log("IN isGitInit()");
+  let found = false;
+  const files = fs.readdirSync(path);
+  files.forEach(file => {
+    if (file === ".git") {
+      found = true;
+      return found;
+    }
   });
-};
+  return found;
+}
+
+/**
+ * Initialized Git in the workspace directory of the VSCode session.
+ */
+function initGit() {
+  console.log("IN initGit()");
+  execSync(`cd ${path} && git init`);
+}
+
+/**
+ * Returns all the URLs for the configured remotes for the git repo.
+ * @returns {string[]} - an array of URL strings
+ */
+function getAllRemoteURLs() {
+  console.log("IN getAllRemoteURLs()");
+  let urls = []; //array of remote urls
+  let gitConfig = String(fs.readFileSync(`${path}/.git/config`));
+  let indexes = getAllIndexesOfSubString(gitConfig, "url");
+  indexes.forEach(index => {
+    urls.push(gitConfig.substring(index + 6, gitConfig.indexOf("\n", index))); //Get the substring that holds the url and push it to the array.
+  });
+  return urls;
+}
 
 /**
  * Given a string and a substring, find the indexes of all occurrences of substring in the searched string.
@@ -121,119 +92,53 @@ const getAllRemoteUrls = () => {
  * @param {string} substr - The substring to search for.
  * @returns {number[]} - An array of numbers that contains the indexes of each instance the substring shows in the searched string.
  */
-const getAllIndexesOfSubString = (str, substr) => {
-  console.log("IN getAllIndexesOfSubString");
-  let indexes = []; //hold all found indexes
-  let currentIndex = 0; // the current index to start searching at
+function getAllIndexesOfSubString(str, substr) {
+  console.log("In getAllIndexesOfSubString()");
+  let indexes = []; // hold all found indexes
+  let currentIndex = 0;
   while (indexes[indexes.length - 1] != -1) {
-    //while I am still finding the substrin
+    //While I am still finding the substring
     indexes.push(str.indexOf(substr, currentIndex)); //add the index of the substring to the array
     currentIndex = indexes[indexes.length - 1] + 1; //update the index to start searching from
   }
-  indexes.pop(); // remove the last element of array cause it will be -1 from not finding anymore instances of the substring
+  indexes.pop(); //Remove the last element of array cause it will be -1 from not finding anymore instances of the substring
   return indexes;
-};
+}
 
-const handleRemoteURL = urls => {
-  console.log("IN handleRemoteURL");
-  return new Promise((resolve, reject) => {
-    urls = removeNonGitHubURLs(urls);
-    if (urls.length == 0) {
-      //No GitHub remotes configured
-      vscode.window
-        .showInformationMessage(
-          "No GitHub Remotes Configured!",
-          "Add GitHub Remote"
-        )
-        .then(action => {
-          if (action === "Add GitHub Remote") {
-            resolve(addGitHubRemote());
-          }
-        });
-    } else if (urls.length > 1) {
-      //More than one GitHub remote configured
-    } else {
-      //Only one GitHub remote configured
-      resolve(urls[0]);
-    }
-  });
-};
-
-/**
- * Given an array of urls, it will return an array of the GitHub Urls in the provided array.
- * @param {String[]} urls - An array of URL strings
- * @returns {String[]} - An array of URL strings containing only the GitHub Urls provided.
- */
-const removeNonGitHubURLs = urls => {
-  console.log("IN removeNonGitHubURLs");
-  let result = []; //array to be returned
-  urls.forEach(url => {
-    if (isGitHubRepo(url)) {
-      //if the url is a GitHub URL add it to the result array.
-      result.push(url);
-    }
-  });
-  return result;
-};
-
-/**
- * Checks if the provided remote URL is a github repo.
- * @param {String} url - A git remote URL
- * @returns {boolean} - True if url is a github repo, false if not.
- */
-const isGitHubRepo = url => {
-  console.log("IN isGitHubRepo");
-  //might need to be changed to check against private github servers.
-  return url.substring(0, 19) === "https://github.com/";
-};
-
-/**
- * Asks User for a GitHub URL and a name for the remote then creates the remote git repo.
- * @summary This function will use the vscode api to get user input on the GitHub Repo URL they would like to use and the name they want to give the remote. If the URL the user gives is not a GitHub URL the function will warn them of this and the give them the option to try again. If they take this option the function will recusively call itself to have them go through entering a GitHub URL again.
- * @returns {Promise} Should resolve to a string containing the URL of the added remote git repo.
- */
-const addGitHubRemote = async () => {
-  console.log("IN addGitHubRemote");
-  return new Promise((resolve, reject) => {
+function handleURLs(urls) {
+  console.log("IN handleURLs()");
+  urls = removeNonGitHubURLs(urls);
+  if (urls.length === 0) {
+    //No URLS
     vscode.window
-      .showInputBox({
-        placeHolder: "GitHub URL",
-        prompt: "Enter the URL of the GitHub Repo"
-      })
-      .then(inputURL => {
-        console.log(`USER-INPUT: ${inputURL}`);
-        if (!isGitHubRepo(inputURL)) {
-          vscode.window
-            .showErrorMessage(
-              "That is not a GitHup URL!",
-              "Try adding a GitHub Remote Again"
-            )
-            .then(action => {
-              if (action === "Try adding a GitHub Remote Again") {
-                resolve(addGitHubRemote());
-              }
-            });
-        } else {
-          vscode.window
-            .showInputBox({
-              placeHolder: "Remote Name",
-              prompt: "Enter a name for the remote repo."
-            })
-            .then(inputName => {
-              exec(
-                `cd ${path} && git remote add ${inputName} ${inputURL}`,
-                (error, stdout, stderr) => {
-                  if (error) {
-                    console.log(error);
-                  }
-                  if (stderr) {
-                    console.log(stderr);
-                  }
-                }
-              );
-              resolve(inputURL);
-            });
+      .showInformationMessage("No GitHub URLs Configured!", "Add GitHub Remote")
+      .then(action => {
+        if (action === "Add GitHub Remote") {
+          return addRemote();
         }
       });
+  } else if (urls.length > 1) {
+    //More than one GitHub URL
+  } else {
+    //Only one GitHub URL
+    return urls[0];
+  }
+}
+
+/**
+ * Takes an array of URL strings and returns an array only containing the GitHub URLs
+ * @param {string[]} urls - Array of URL strings
+ * @returns {string[]} - Array of only GitHub URL strings
+ */
+function removeNonGitHubURLs(urls) {
+  console.log("IN removeNonGitHubURLs()");
+  let ghURLs = []; //array to hold and return only github urls
+  urls.forEach(url => {
+    if (url.substring(0, 19) === "https://github.com/") {
+      ghURLs.push(url);
+    }
   });
-};
+  return ghURLs;
+}
+
+function addRemote() {}
